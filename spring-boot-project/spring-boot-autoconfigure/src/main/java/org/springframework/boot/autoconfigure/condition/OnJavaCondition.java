@@ -36,6 +36,9 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 class OnJavaCondition extends SpringBootCondition {
 
+	/**
+	 * 用一些特定的类型来判断当前JDK版本
+	 */
 	private static final JavaVersion JVM_VERSION = JavaVersion.getJavaVersion();
 
 	@Override

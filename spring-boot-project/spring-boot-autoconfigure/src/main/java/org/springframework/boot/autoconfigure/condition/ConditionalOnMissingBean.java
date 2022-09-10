@@ -80,6 +80,8 @@ public @interface ConditionalOnMissingBean {
 	String[] type() default {};
 
 	/**
+	 * 排除某个子类，用处不大。
+	 *
 	 * The class types of beans that should be ignored when identifying matching beans.
 	 * @return the class types of beans to ignore
 	 * @since 1.2.5
@@ -87,6 +89,8 @@ public @interface ConditionalOnMissingBean {
 	Class<?>[] ignored() default {};
 
 	/**
+	 * 排除某个子类，用处不大。
+	 *
 	 * The class type names of beans that should be ignored when identifying matching
 	 * beans.
 	 * @return the class type names of beans to ignore

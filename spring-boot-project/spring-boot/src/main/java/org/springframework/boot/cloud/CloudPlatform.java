@@ -27,6 +27,8 @@ import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.StandardEnvironment;
 
 /**
+ * 枚举无法扩展，鸡肋。
+ *
  * Simple detection for well known cloud platforms. Detection can be forced using the
  * {@code "spring.main.cloud-platform"} configuration property.
  *
@@ -160,7 +162,10 @@ public enum CloudPlatform {
 	 */
 	public boolean isActive(Environment environment) {
 		String platformProperty = environment.getProperty(PROPERTY_NAME);
-		return isEnforced(platformProperty) || (platformProperty == null && isDetected(environment));
+		// 手动配置了 spring.main.cloud-platform 属性
+		return isEnforced(platformProperty)
+				// 自动推断当前的云平台类型是否匹配
+				|| (platformProperty == null && isDetected(environment));
 	}
 
 	/**
@@ -190,6 +195,8 @@ public enum CloudPlatform {
 	}
 
 	/**
+	 * 自动推断当前的云平台类型
+	 *
 	 * Determines if the platform is detected by looking for platform-specific environment
 	 * variables.
 	 * @param environment the environment

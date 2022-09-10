@@ -36,6 +36,8 @@ import org.springframework.util.StringUtils;
  * {@link Condition} and {@link AutoConfigurationImportFilter} that checks for the
  * presence or absence of specific classes.
  *
+ * 同时处理 {@link ConditionalOnClass} 和 @{@link ConditionalOnMissingClass} 两个注解
+ *
  * @author Phillip Webb
  * @see ConditionalOnClass
  * @see ConditionalOnMissingClass
@@ -90,10 +92,13 @@ class OnClassCondition extends FilteringSpringBootCondition {
 	public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
 		ClassLoader classLoader = context.getClassLoader();
 		ConditionMessage matchMessage = ConditionMessage.empty();
+		// 这里用来处理 @ConditionalOnClass 注解
+		// @ConditionalOnClass中定义的Class的名字列表(ASM)
 		List<String> onClasses = getCandidates(metadata, ConditionalOnClass.class);
 		if (onClasses != null) {
 			List<String> missing = filter(onClasses, ClassNameFilter.MISSING, classLoader);
 			if (!missing.isEmpty()) {
+				// 表示有缺失的类，返回不匹配。
 				return ConditionOutcome.noMatch(ConditionMessage.forCondition(ConditionalOnClass.class)
 						.didNotFind("required class", "required classes").items(Style.QUOTE, missing));
 			}
@@ -101,10 +106,13 @@ class OnClassCondition extends FilteringSpringBootCondition {
 					.found("required class", "required classes")
 					.items(Style.QUOTE, filter(onClasses, ClassNameFilter.PRESENT, classLoader));
 		}
+		// 这里用来处理 @ConditionalOnMissingClass 注解
+		// @ConditionalOnMissingClass中定义的Class的名字列表(ASM)
 		List<String> onMissingClasses = getCandidates(metadata, ConditionalOnMissingClass.class);
 		if (onMissingClasses != null) {
 			List<String> present = filter(onMissingClasses, ClassNameFilter.PRESENT, classLoader);
 			if (!present.isEmpty()) {
+				// 表示有存在的类(期望不存在)，返回不匹配。
 				return ConditionOutcome.noMatch(ConditionMessage.forCondition(ConditionalOnMissingClass.class)
 						.found("unwanted class", "unwanted classes").items(Style.QUOTE, present));
 			}

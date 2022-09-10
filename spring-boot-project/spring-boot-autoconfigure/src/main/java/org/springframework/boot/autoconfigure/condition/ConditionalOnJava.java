@@ -41,6 +41,9 @@ import org.springframework.context.annotation.Conditional;
 public @interface ConditionalOnJava {
 
 	/**
+	 * 1.<
+	 * 2.>=
+	 *
 	 * Configures whether the value configured in {@link #value()} shall be considered the
 	 * upper exclusive or lower inclusive boundary. Defaults to
 	 * {@link Range#EQUAL_OR_NEWER}.

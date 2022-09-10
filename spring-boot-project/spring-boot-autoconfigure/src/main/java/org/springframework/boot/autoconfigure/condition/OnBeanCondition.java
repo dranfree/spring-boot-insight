@@ -71,7 +71,7 @@ import org.springframework.util.StringUtils;
  * @author Andy Wilkinson
  * @see ConditionalOnBean
  * @see ConditionalOnMissingBean
- * @see ConditionalOnSingleCandidate
+ * @see ConditionalOnSingleCandidate 指定类型的bean只有一个
  */
 @Order(Ordered.LOWEST_PRECEDENCE)
 class OnBeanCondition extends FilteringSpringBootCondition implements ConfigurationCondition {
@@ -114,6 +114,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 	public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
 		ConditionMessage matchMessage = ConditionMessage.empty();
 		MergedAnnotations annotations = metadata.getAnnotations();
+		// 1.处理 @ConditionalOnBean 注解
 		if (annotations.isPresent(ConditionalOnBean.class)) {
 			Spec<ConditionalOnBean> spec = new Spec<>(context, metadata, annotations, ConditionalOnBean.class);
 			MatchResult matchResult = getMatchingBeans(context, spec);
@@ -124,9 +125,11 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 			matchMessage = spec.message(matchMessage).found("bean", "beans").items(Style.QUOTE,
 					matchResult.getNamesOfAllMatches());
 		}
+		// 2.处理 @ConditionalOnSingleCandidate 注解
 		if (metadata.isAnnotated(ConditionalOnSingleCandidate.class.getName())) {
 			Spec<ConditionalOnSingleCandidate> spec = new SingleCandidateSpec(context, metadata, annotations);
 			MatchResult matchResult = getMatchingBeans(context, spec);
+			// 不全部匹配(部分匹配或者都不匹配)
 			if (!matchResult.isAllMatched()) {
 				return ConditionOutcome.noMatch(spec.message().didNotFind("any beans").atAll());
 			}
@@ -135,12 +138,14 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 				matchMessage = spec.message(matchMessage).found("a single bean").items(Style.QUOTE, allBeans);
 			}
 			else {
+				// @Primary注解判断
 				List<String> primaryBeans = getPrimaryBeans(context.getBeanFactory(), allBeans,
 						spec.getStrategy() == SearchStrategy.ALL);
 				if (primaryBeans.isEmpty()) {
 					return ConditionOutcome.noMatch(
 							spec.message().didNotFind("a primary bean from beans").items(Style.QUOTE, allBeans));
 				}
+				// 多个bean上加了@Primary注解
 				if (primaryBeans.size() > 1) {
 					return ConditionOutcome
 							.noMatch(spec.message().found("multiple primary beans").items(Style.QUOTE, primaryBeans));
@@ -150,10 +155,12 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 						.items(Style.QUOTE, allBeans);
 			}
 		}
+		// 3.处理 @ConditionalOnMissingBean 注解
 		if (metadata.isAnnotated(ConditionalOnMissingBean.class.getName())) {
 			Spec<ConditionalOnMissingBean> spec = new Spec<>(context, metadata, annotations,
 					ConditionalOnMissingBean.class);
 			MatchResult matchResult = getMatchingBeans(context, spec);
+			// 任意一个类型匹配到了bean实例，代表该注解不匹配。
 			if (matchResult.isAnyMatched()) {
 				String reason = createOnMissingBeanNoMatchReason(matchResult);
 				return ConditionOutcome.noMatch(spec.message().because(reason));

@@ -87,6 +87,7 @@ class OnWebApplicationCondition extends FilteringSpringBootCondition {
 	@Override
 	public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
 		boolean required = metadata.isAnnotated(ConditionalOnWebApplication.class.getName());
+		// 是否是一个web应用
 		ConditionOutcome outcome = isWebApplication(context, metadata, required);
 		if (required && !outcome.isMatch()) {
 			return ConditionOutcome.noMatch(outcome.getConditionMessage());
