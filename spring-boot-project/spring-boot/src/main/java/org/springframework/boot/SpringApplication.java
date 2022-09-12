@@ -354,9 +354,14 @@ public class SpringApplication {
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 			DefaultBootstrapContext bootstrapContext, ApplicationArguments applicationArguments) {
 		// Create and configure the environment
+		// 创建一个 Environment 对象，里面有四个 PropertySource：
+		// 1.
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
+		// 这里将命令行参数添加到 Environment 中
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
 		ConfigurationPropertySources.attach(environment);
+		// 发布一个[环境准备好]的事件，事件监听器：
+		// EnvironmentPostProcessorApplicationListener，这一步会加载application.properties配置文件、系统环境变量等。
 		listeners.environmentPrepared(bootstrapContext, environment);
 		DefaultPropertiesPropertySource.moveToEnd(environment);
 		Assert.state(!environment.containsProperty("spring.main.environment-prefix"),
@@ -527,6 +532,7 @@ public class SpringApplication {
 		if (!CollectionUtils.isEmpty(this.defaultProperties)) {
 			DefaultPropertiesPropertySource.addOrMerge(this.defaultProperties, sources);
 		}
+		// 封装命令行参数为一个 PropertySource，优先级最高。
 		if (this.addCommandLineProperties && args.length > 0) {
 			String name = CommandLinePropertySource.COMMAND_LINE_PROPERTY_SOURCE_NAME;
 			if (sources.contains(name)) {

@@ -97,6 +97,10 @@ public class EnvironmentPostProcessorApplicationListener implements SmartApplica
 	private void onApplicationEnvironmentPreparedEvent(ApplicationEnvironmentPreparedEvent event) {
 		ConfigurableEnvironment environment = event.getEnvironment();
 		SpringApplication application = event.getSpringApplication();
+		// 1.RandomValuePropertySourceEnvironmentPostProcessor：${random.int}
+		// 2.SpringApplicationJsonEnvironmentPostProcessor：
+		// 3.SystemEnvironmentPropertySourceEnvironmentPostProcessor：系统环境变量
+		// 4.ConfigDataEnvironmentPostProcessor：properties文件解析，默认解析application.*配置文件，不同后缀的配置文件会有一定的优先级排序。
 		for (EnvironmentPostProcessor postProcessor : getEnvironmentPostProcessors(application.getResourceLoader(),
 				event.getBootstrapContext())) {
 			postProcessor.postProcessEnvironment(environment, application);
