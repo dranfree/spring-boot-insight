@@ -145,6 +145,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 			super.refresh();
 		}
 		catch (RuntimeException ex) {
+			// 启动异常的时候关闭内嵌的Servlet容器
 			WebServer webServer = this.webServer;
 			if (webServer != null) {
 				webServer.stop();
@@ -157,6 +158,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	protected void onRefresh() {
 		super.onRefresh();
 		try {
+			// 容器启动成功，启动内嵌的Servlet容器（Tomcat）
 			createWebServer();
 		}
 		catch (Throwable ex) {

@@ -256,11 +256,18 @@ public class SpringApplication {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 1.推断应用类型
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
+		// 2.注册必要的初始化器、监听器等
+		// 和 BootstrapContext 容器相关
+		// 从spring.factories中取BootstrapRegistryInitializer类型的值(key=BootstrapRegistryInitializer)
 		this.bootstrapRegistryInitializers = new ArrayList<>(
 				getSpringFactoriesInstances(BootstrapRegistryInitializer.class));
+		// 从spring.factories中取ApplicationContextInitializer类型的值(key=ApplicationContextInitializer)
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+		// 从spring.factories中取ApplicationListener类型的值(key=ApplicationListener)
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+		// 3.推断main方法所在的类(从调用栈中获取)
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
@@ -287,26 +294,40 @@ public class SpringApplication {
 	 */
 	public ConfigurableApplicationContext run(String... args) {
 		long startTime = System.nanoTime();
+		// 引导启动器
 		DefaultBootstrapContext bootstrapContext = createBootstrapContext();
 		ConfigurableApplicationContext context = null;
-		configureHeadlessProperty();
+		configureHeadlessProperty(); // AWT相关，忽略。
+		// SpringBoot启动监听器：也是从spring.factories中获取的，默认情况下只有一个 EventPublishingRunListener，用来广播事件的。
 		SpringApplicationRunListeners listeners = getRunListeners(args);
+		// 发布启动事件
 		listeners.starting(bootstrapContext, this.mainApplicationClass);
 		try {
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, bootstrapContext, applicationArguments);
+			// spring.beaninfo.ignore=true：表示不需要JDK缓存beaninfo信息(java.beans.BeanInfo)，Spring自己会去缓存。
 			configureIgnoreBeanInfo(environment);
 			Banner printedBanner = printBanner(environment);
+			// 根据前面推断出来的应用类型来创建一个空的 ApplicationContext
 			context = createApplicationContext();
 			context.setApplicationStartup(this.applicationStartup);
+			// 初始化Spring容器：
+			// 1.Environment
+			// 2.发布应用相关事件
+			// 3.注册启动配置类
+			// 4.利用ApplicationContextInitializer初始化容器(spring.factories中配置的)
 			prepareContext(bootstrapContext, context, environment, listeners, applicationArguments, printedBanner);
+			// refresh()
 			refreshContext(context);
+			// 留给子类的钩子，默认空实现。
 			afterRefresh(context, applicationArguments);
 			Duration timeTakenToStartup = Duration.ofNanos(System.nanoTime() - startTime);
 			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), timeTakenToStartup);
 			}
 			listeners.started(context, timeTakenToStartup);
+			// org.springframework.boot.ApplicationRunner
+			// org.springframework.boot.CommandLineRunner
 			callRunners(context, applicationArguments);
 		}
 		catch (Throwable ex) {
@@ -394,6 +415,7 @@ public class SpringApplication {
 		if (beanFactory instanceof AbstractAutowireCapableBeanFactory) {
 			((AbstractAutowireCapableBeanFactory) beanFactory).setAllowCircularReferences(this.allowCircularReferences);
 			if (beanFactory instanceof DefaultListableBeanFactory) {
+				// 是否允许重复定义的bean覆盖(重复的bean声明需要类型兼容才能覆盖，否则还是会拒绝注册)
 				((DefaultListableBeanFactory) beanFactory)
 						.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
 			}
@@ -402,6 +424,7 @@ public class SpringApplication {
 			context.addBeanFactoryPostProcessor(new LazyInitializationBeanFactoryPostProcessor());
 		}
 		// Load the sources
+		// 将启动配置类注册到Spring容器中
 		Set<Object> sources = getAllSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
 		load(context, sources.toArray(new Object[0]));
@@ -738,6 +761,8 @@ public class SpringApplication {
 	 */
 	protected void refresh(ConfigurableApplicationContext applicationContext) {
 		applicationContext.refresh();
+		// 一般web应用这里的容器是 ServletWebServerApplicationContext
+		// webflux 应用这里的容器就是 ReactiveWebServerApplicationContext
 	}
 
 	/**

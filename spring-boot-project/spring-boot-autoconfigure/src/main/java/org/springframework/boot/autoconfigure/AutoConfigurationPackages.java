@@ -108,6 +108,7 @@ public abstract class AutoConfigurationPackages {
 
 		@Override
 		public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
+			// 注册一个BasePackages对象到容器中去，这个路径是提供给导入的配置类使用的，比如MyBatis自动配置默认会获取这个包路径作为扫描路径(如果没有手动配置的话)。
 			register(registry, new PackageImports(metadata).getPackageNames().toArray(new String[0]));
 		}
 
@@ -132,6 +133,7 @@ public abstract class AutoConfigurationPackages {
 			for (Class<?> basePackageClass : attributes.getClassArray("basePackageClasses")) {
 				packageNames.add(basePackageClass.getPackage().getName());
 			}
+			// 一般都是空，大部分情况下这里得到都是启动配置类所在的包路径。
 			if (packageNames.isEmpty()) {
 				packageNames.add(ClassUtils.getPackageName(metadata.getClassName()));
 			}

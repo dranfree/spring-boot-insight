@@ -46,6 +46,7 @@ public class AutoConfigurationExcludeFilter implements TypeFilter, BeanClassLoad
 	@Override
 	public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory)
 			throws IOException {
+		// Spring过滤的时候不要去扫描自动配置类
 		return isConfiguration(metadataReader) && isAutoConfiguration(metadataReader);
 	}
 
@@ -54,6 +55,7 @@ public class AutoConfigurationExcludeFilter implements TypeFilter, BeanClassLoad
 	}
 
 	private boolean isAutoConfiguration(MetadataReader metadataReader) {
+		// 判断该配置类是否为spring.factories中定义的自动配置类
 		return getAutoConfigurations().contains(metadataReader.getClassMetadata().getClassName());
 	}
 

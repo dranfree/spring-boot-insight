@@ -54,7 +54,11 @@ import org.springframework.data.repository.Repository;
 @Inherited
 @SpringBootConfiguration
 @EnableAutoConfiguration // 扫描 spring.factories 文件
-@ComponentScan(excludeFilters = { @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
+// BeanDefinition扫描完成之后才会解析自动配置类
+@ComponentScan(excludeFilters = {
+		// 允许自定义TypeExcludeFilter扩展(需要利用SpringBoot的机制去在扫描之前注入)
+		@Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
+		// BeanDefinition扫描的时候过滤掉自动配置类
 		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
 public @interface SpringBootApplication {
 
